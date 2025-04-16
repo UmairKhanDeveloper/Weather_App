@@ -1,8 +1,9 @@
-package com.example.weather_app.presentation.navigation
+package com.example.weather_app.presentation.ui.screen.location
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,9 +19,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
+import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,33 +39,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import com.example.weather_app.R
-import com.example.weather_app.presentation.ui.screen.detail.DetailScreen
-import com.example.weather_app.presentation.ui.screen.home.HomeScreen
-import com.example.weather_app.presentation.ui.screen.location.LocationScreen
 import kotlinx.coroutines.launch
-
-@Composable
-fun Navigation(navController: NavHostController) {
-    NavHost(navController = navController, startDestination = Screens.HomeScreen.route) {
-        composable(Screens.HomeScreen.route){ HomeScreen(navController)}
-        composable(Screens.DetailScreen.route){ DetailScreen(navController)}
-        composable(Screens.LocationScreen.route){ LocationScreen(navController)}
-
-    }
-
-}
-
-
-sealed class Screens(val title:String,val route:String){
-    object HomeScreen:Screens("home","home")
-    object  DetailScreen:Screens("Detail","Detail")
-    object  LocationScreen:Screens("Location","Location")
-
-}
+import java.time.DayOfWeek
 
 @Composable
 fun LocationScreen(navController: NavController) {
@@ -89,7 +70,8 @@ fun LocationScreen(navController: NavController) {
         modifier = Modifier
             .fillMaxSize()
             .background(brush)
-            .padding(16.dp),
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Column(
@@ -123,7 +105,7 @@ fun LocationScreen(navController: NavController) {
             }
         }
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(50.dp))
 
 
         Text(
@@ -136,7 +118,7 @@ fun LocationScreen(navController: NavController) {
             fontWeight = FontWeight.Bold
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -197,6 +179,116 @@ fun LocationScreen(navController: NavController) {
                     }
             )
         }
+        val box = Brush.horizontalGradient(
+            colors = listOf(
+                Color(0xFF805BCA),
+                Color(0xFF362A84)
+            )
+        )
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Card(
+            modifier = Modifier
+                .height(174.dp)
+                .width(352.dp),
+            shape = RoundedCornerShape(24.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(box)
+                    .padding(8.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(10.dp)
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_crosshairs),
+                            contentDescription = "", tint = Color.White
+                        )
+                        Text(text = "AIR QUALITY", color = Color.White, fontSize = 16.sp)
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = "3-Low Health Risk",
+                        color = Color.White,
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    val box1 = Brush.horizontalGradient(
+                        colors = listOf(
+                            Color(0xFF805BCA),
+                            Color(0xFF362A84)
+                        )
+                    )
+
+                    Divider(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(box1),
+                        thickness = 0.dp,
+                        color = DividerDefaults.color
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "See more", fontSize = 18.sp, color = Color.White)
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_arrow_left),
+                            contentDescription = "Scroll Right",
+                            tint = Color.White
+                        )
+
+                    }
+
+
+                }
+
+
+            }
+
+        }
+        Spacer(modifier = Modifier.height(40.dp))
+        val brush1 = Brush.verticalGradient(
+            listOf(
+                Color(0XFF1a2340),
+                Color(0XFF4d3d99),
+                Color(0XFF874ead)
+            )
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            WeatherCard(
+                title = "SUNRISE",
+                time = "5:28",
+                amPm = "AM",
+                bottomText = "Sunset: 7:25PM",
+                modifier = Modifier.weight(1f)
+            )
+
+            WeatherCard(
+                title = "UV INDEX",
+                time = "4",
+                amPm = "",
+                bottomText = "Moderate",
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+
     }
 }
 
@@ -245,6 +337,85 @@ fun LocationWeatherReportItem(degree: String, image: Int, dayOfWeek: String) {
                     color = Color.White,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun WeatherCard(
+    title: String,
+    time: String,
+    amPm: String,
+    bottomText: String,
+    modifier: Modifier = Modifier
+) {
+    val brush = Brush.verticalGradient(
+        listOf(
+            Color(0XFF1a2340),
+            Color(0XFF4d3d99),
+            Color(0XFF874ead)
+        )
+    )
+
+    Card(
+        modifier = modifier
+            .height(150.dp),
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(brush)
+                .padding(12.dp)
+        ) {
+            Column(
+                verticalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_star),
+                        contentDescription = null,
+                        tint = Color.White
+                    )
+                    Text(
+                        text = title,
+                        color = Color.White,
+                        fontSize = 16.sp
+                    )
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        text = time,
+                        color = Color.White,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    if (amPm.isNotEmpty()) {
+                        Text(
+                            text = amPm,
+                            color = Color.White,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+
+                Text(
+                    text = bottomText,
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }

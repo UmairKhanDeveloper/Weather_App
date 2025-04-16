@@ -1,4 +1,4 @@
-package com.example.weather_app.presentation.ui.screen
+package com.example.weather_app.presentation.ui.screen.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,9 +19,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import com.example.weather_app.presentation.navigation.Screens
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(navController: NavController) {
     val brush = Brush
         .verticalGradient(
             listOf(
@@ -41,7 +43,11 @@ fun HomeScreen() {
                 .height(428.dp)
                 .width(428.dp)
         )
-        Text(text = "Weather", fontSize = 64.sp, color = Color.White, fontWeight = FontWeight.Bold)
+        Text(
+            text = "Weather", fontSize = 64.sp,
+            color = Color.White,
+            fontWeight = FontWeight.Bold
+        )
         Text(
             text = "ForeCasts",
             fontSize = 64.sp,
@@ -50,12 +56,17 @@ fun HomeScreen() {
         )
         Spacer(modifier = Modifier.height(30.dp))
         Button(
-            onClick = { }, modifier = Modifier
+            onClick = { navController.navigate(Screens.DetailScreen.route) }, modifier = Modifier
                 .height(72.dp)
                 .width(304.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0XFFDDB130))
+            colors = ButtonDefaults
+                .buttonColors(containerColor = Color(0XFFDDB130))
         ) {
-            Text(text = "Get Start", color = Color(0XFF4b3b7a), fontSize = 20.sp)
+            Text(
+                text = "Get Start",
+                color = Color(0XFF4b3b7a),
+                fontSize = 20.sp
+            )
         }
 
 
