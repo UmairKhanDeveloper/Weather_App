@@ -1,7 +1,7 @@
 package com.example.weather_app.presentation.ui.screen.detail
 
 
-
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,13 +18,21 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -32,12 +40,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -47,31 +59,53 @@ import com.example.weather_app.domain.model.MainViewModel
 import com.example.weather_app.domain.repoistory.Repository
 import com.example.weather_app.domain.usecase.ResultState
 import com.example.weather_app.presentation.navigation.Screens
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+
+@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(navController: NavController) {
-    val brush = Brush
-        .verticalGradient(
-            listOf(
-                Color(0XFF1a2340),
-                Color(0XFF4d3d99),
-                Color(0XFF874ead)
-            )
+    val context = LocalContext.current
+    val locationHelper = remember { LocationHelper(context) }
+
+    val permissionsState = rememberMultiplePermissionsState(
+        permissions = listOf(
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+            android.Manifest.permission.ACCESS_COARSE_LOCATION
         )
+    )
+
+    val brush = Brush.verticalGradient(
+        listOf(Color(0XFF1a2340), Color(0XFF4d3d99), Color(0XFF874ead))
+    )
 
     val repository = remember { Repository() }
     val viewModel = remember { MainViewModel(repository) }
     val state by viewModel.allWeatherReport.collectAsState()
-    var allWeatherData = remember { mutableStateOf<weaterapi?>(null) }
+    var allWeatherData by remember { mutableStateOf<weaterapi?>(null) }
     var isLoading by remember { mutableStateOf(true) }
+    var showSearchBox by remember { mutableStateOf(false) }
+    var searchCity by remember { mutableStateOf("") }
 
-
-    LaunchedEffect(Unit) {
-        viewModel.getWeather("multan")
+    LaunchedEffect(permissionsState.allPermissionsGranted) {
+        if (permissionsState.allPermissionsGranted) {
+            locationHelper.getCurrentLocation(
+                onLocationFound = { city ->
+                    searchCity = city
+                    viewModel.getWeather(city)
+                },
+                onError = {
+                    viewModel.getWeather(searchCity)
+                }
+            )
+        } else {
+            permissionsState.launchMultiplePermissionRequest()
+        }
     }
 
     when (state) {
@@ -88,24 +122,27 @@ fun DetailScreen(navController: NavController) {
         is ResultState.Succses -> {
             isLoading = false
             val succses = (state as ResultState.Succses).response
-            allWeatherData.value = succses
+            allWeatherData = succses
         }
     }
 
     if (isLoading) {
-        Box(modifier = Modifier.fillMaxSize().background(brush), contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(brush), contentAlignment = Alignment.Center
+        ) {
             CircularProgressIndicator(color = Color.White)
         }
     } else {
 
-        val weatherData = allWeatherData.value
+        val weatherData = allWeatherData
         if (weatherData != null) {
 
             val date = weatherData.forecast.forecastday.getOrNull(0)?.date
             val formattedDate = date?.let { formatDate(it) } ?: "--"
 
             val currentTime = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-
 
             Column(
                 modifier = Modifier
@@ -121,6 +158,73 @@ fun DetailScreen(navController: NavController) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+
+                    AnimatedVisibility(visible = showSearchBox) {
+                        OutlinedTextField(
+                            value = searchCity,
+                            onValueChange = { searchCity = it },
+                            placeholder = {
+                                Text(
+                                    text = "Search city...",
+                                    color = Color.White.copy(alpha = 0.6f)
+                                )
+                            },
+                            textStyle = TextStyle(color = Color.White, fontSize = 16.sp),
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Default.Search,
+                                    contentDescription = "Search",
+                                    tint = Color.White
+                                )
+                            },
+                            trailingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Close",
+                                    tint = Color.White,
+                                    modifier = Modifier.clickable {
+                                        searchCity = ""
+                                        showSearchBox = false
+                                    }
+                                )
+                            },
+                            singleLine = true,
+                            shape = RoundedCornerShape(50),
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    if (searchCity.isNotBlank()) {
+                                        viewModel.getWeather(searchCity.trim())
+                                        showSearchBox = false
+                                    }
+                                }
+                            ),
+                            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                            colors = TextFieldDefaults.outlinedTextFieldColors(
+                                containerColor = Color.White.copy(alpha = 0.1f),
+                                focusedBorderColor = Color.White,
+                                unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
+                                cursorColor = Color.White
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp)
+                        )
+                    }
+
+                    if (!showSearchBox || searchCity.isBlank()) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = Color.White,
+                            modifier = Modifier
+                                .align(Alignment.End)
+                                .size(28.dp)
+                                .clickable {
+                                    showSearchBox = true
+                                }
+                        )
+                    }
+
                     Image(
                         painter = painterResource(id = R.drawable.weather),
                         contentDescription = "Weather Icon",
@@ -130,6 +234,12 @@ fun DetailScreen(navController: NavController) {
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "${weatherData.location.name}", fontSize = 42.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
 
                     Text(
                         text = "${weatherData.current.tempC}°C",
@@ -157,7 +267,6 @@ fun DetailScreen(navController: NavController) {
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
-
 
                     Text(
                         text = "Max: ${weatherData.forecast.forecastday[0].day.maxtempC}°C",
@@ -236,9 +345,13 @@ fun DetailScreen(navController: NavController) {
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text(text = "Today", fontWeight = FontWeight.SemiBold, color = Color.White)
                                 Text(
-                                    text =formattedDate ,
+                                    text = "Today",
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = formattedDate,
                                     fontWeight = FontWeight.SemiBold,
                                     color = Color.White
                                 )
@@ -250,12 +363,10 @@ fun DetailScreen(navController: NavController) {
 
                             Spacer(modifier = Modifier.height(16.dp))
 
-
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-
                                 for (i in 0 until 4) {
                                     val forecastHour =
                                         weatherData.forecast.forecastday[0].hour.getOrNull(

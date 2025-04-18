@@ -84,5 +84,7 @@ dependencies {
     implementation(libs.ktor.client.serialization.kotlinx.json)
     implementation(libs.ktor.client.android)
     implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+
 
 }
